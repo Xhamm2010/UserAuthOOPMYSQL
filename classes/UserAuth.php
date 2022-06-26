@@ -11,54 +11,55 @@ class UserAuth extends Dbh
         self::$db = new Dbh();
     }
 
-//===============================================================================
-// Method To Register User
-//===============================================================================
+    //===============================================================================
+    // Method To Register User
+    //===============================================================================
 
     public function register($fullname, $email, $password, $confirmPassword, $country, $gender)
     {
         $conn = self::$db->connect();
-        if ($this->confirmPasswordMatch($password, $confirmPassword)) {
-            $sql = "INSERT INTO Students (`full_names`, `email`, `password`, `country`, `gender`) VALUES ('$fullname','$email', '$password', '$country', '$gender')";
-            if ($conn->query($sql)) {
-                echo "Ok";
-            } else {
-                echo "Opps" . $conn->error;
-            }
-        }else
-        echo "<script> alert('Password Does not Match');</script> ";
+        if ($this->checkEmailExist($email)) {
+            echo "<script> alert('User With this Email Exist');</script> ";
+        } else {
+            if ($this->confirmPasswordMatch($password, $confirmPassword)) {
+                $sql = "INSERT INTO Students (`full_names`, `email`, `password`, `country`, `gender`) VALUES ('$fullname','$email', '$password', '$country', '$gender')";
+                if ($conn->query($sql)) {
+                    echo "Ok";
+                } else {
+                    echo "Opps" . $conn->error;
+                }
+            } else
+                echo "<script> alert('Password Does not Match');</script> ";
+        }
     }
 
-//============================================================================
-// Method To Login User
-//============================================================================
+    //============================================================================
+    // Method To Login User
+    //============================================================================
 
     public function login($email, $password)
     {
         $conn = self::$db->connect();
-        $sql = "SELECT email, password FROM Students WHERE email='$email' AND `password`='$password' LIMIT 1";
+        $sql = "SELECT * FROM Students WHERE email='$email' AND `password`='$password' LIMIT 1";
         $result = $conn->query($sql);
         if ($result->num_rows > 0) {
             $userData = $result->fetch_assoc();
             if ($userData['email'] === $email && $userData['password'] === $password) {
                 session_start();
-                $_SESSION['email'] = $userData['email'];
+
                 $_SESSION['username'] = $userData['full_names'];
                 header("Location: dashboard.php?login=Success");
-                exit();
-            } else
-                header("Location: forms/login.php?error=WrongPasswordOrEmail");
-            exit();
+            } else header("Location: forms/login.php?error=WrongPasswordOrEmail");
         } else {
             header("Location: forms/login.php?error=WrongPasswordOrEmail");
             exit();
         }
     }
 
-//============================================================================
-// Method To Get User
-//============================================================================
-    
+    //============================================================================
+    // Method To Get User
+    //============================================================================
+
 
     public function getUser($username)
     {
@@ -73,9 +74,9 @@ class UserAuth extends Dbh
     }
 
 
-//============================================================================
-// Method To Get All User
-//============================================================================
+    //============================================================================
+    // Method To Get All User
+    //============================================================================
 
     public function getAllUsers()
     {
@@ -94,20 +95,19 @@ class UserAuth extends Dbh
         </thead></tr>";
         if ($result->num_rows > 0) {
             while ($data = mysqli_fetch_assoc($result)) {
-                
+
                 //show data
                 echo "<tr style='height: 20px'>" .
-                    "<td style='width: 50px; background: gray'>" . $data['id'] . "</td>
-                    <td style='width: 150px'>" . $data['full_names'] .
-                    "</td> <td style='width: 150px'>" . $data['email'] .
-                    "</td> <td style='width: 150px'>" . $data['gender'] .
-                    "</td> <td style='width: 150px'>" . $data['country'] .
-                    "</td>
-                    <td style='width: 150px'> 
-                    <form action='classes/delete.php' method='post'>
+                    "<td style='width: 50px; background: gray'>" . $data['id'] . "</td>" .
+                    "<td style='width: 150px'>" . $data['full_names'] . "</td>" .
+                    "<td style='width: 150px'>" . $data['email'] . "</td>" .
+                    " <td style='width: 150px'>" . $data['gender'] . "</td>" .
+                    "<td style='width: 150px'>" . $data['country'] . "</td>" .
+                    "<td style='width: 150px'> 
+                    <form action='action.php' method='post'>
                     <input type='hidden' name='id'" .
                     "value=" . $data['id'] . ">" .
-                    "<button class='btn btn-danger' type='submit', name='delete'><a href='classes/delete.php?id=".$data['id']."'> DELETE </a></button> </form> </td>" .
+                    "<button class='btn btn-danger' type='submit' name='delete'> DELETE </button> </form> </td>" .
                     "</tr>";
             }
             echo "</table></table></center></body></html>";
@@ -115,31 +115,31 @@ class UserAuth extends Dbh
     }
 
 
-//============================================================================
-// Method To Delete User
-//============================================================================
+    //============================================================================
+    // Method To Delete User
+    //============================================================================
 
     public function deleteUser($id)
     {
-        $conn = $this->db->connect();
-        $id = $_POST['id'];
+        $conn = UserAuth::$db->connect();
+
         $sql = "DELETE FROM Students WHERE id = '$id'";
         if ($conn->query($sql) === TRUE) {
-            header("refresh:0.5; url=action.php?all=.'$id.'");
+            header("refresh:0.5; url=action.php?all=");
         } else {
-            header("refresh:0.5; url=action.php?all=?message=Error");
+            header("refresh:0.5; url=action.php?all&message=Error");
         }
     }
 
 
-//============================================================================
-// Method To Update User
-//============================================================================
+    //============================================================================
+    // Method To Update User
+    //============================================================================
 
     public function updateUser($email, $password)
     {
         $conn = self::$db->connect();
-        $sql = "UPDATE students SET password = '$password' WHERE email = '$email' LIMIT 1" ;
+        $sql = "UPDATE students SET password = '$password' WHERE email = '$email' LIMIT 1";
         if ($conn->query($sql) === TRUE) {
             header("Location: forms/login.php?update=UpdateSuccessful");
             exit();
@@ -150,41 +150,40 @@ class UserAuth extends Dbh
     }
 
 
-//============================================================================
-// Method To Get User By Name
-//============================================================================
+    //============================================================================
+    // Method To Get User By Name
+    //============================================================================
 
-    public function getUserByUsername($username)
+    public function checkEmailExist($email)
     {
         $conn = $this->db->connect();
-        $sql = "SELECT * FROM users WHERE username = '$username'";
+        $sql = "SELECT * FROM users WHERE username = '$email'";
         $result = $conn->query($sql);
         if ($result->num_rows > 0) {
-            return $result->fetch_assoc();
+            return true;
         } else {
             return false;
         }
     }
 
 
-//============================================================================
-// Method To Logout User
-//============================================================================
+    //============================================================================
+    // Method To Logout User
+    //============================================================================
 
     public function logout($email)
-    { 
+    {
         if (isset($_SESSION['email']) == ['email']) {
-        session_unset();
-        session_destroy();
-        header("Location: forms/login.php");
-    }
-        
+            session_unset();
+            session_destroy();
+            header("Location: forms/login.php");
+        }
     }
 
 
-//============================================================================
-// Method To ConfirmPassword
-//============================================================================
+    //============================================================================
+    // Method To ConfirmPassword
+    //============================================================================
 
     public function confirmPasswordMatch($password, $confirmPassword)
     {
@@ -195,9 +194,9 @@ class UserAuth extends Dbh
         }
     }
 
-//============================================================================
-// Method To Check if a User Exist(I added this method)
-//============================================================================
+    //============================================================================
+    // Method To Check if a User Exist(I added this method)
+    //============================================================================
     public function UserExist($email, $password)
     {
         $conn = self::$db->connect();
@@ -210,9 +209,9 @@ class UserAuth extends Dbh
         }
     }
 
-//============================================================================
-// Method To Check if password Exist(I added this method)
-//============================================================================
+    //============================================================================
+    // Method To Check if password Exist(I added this method)
+    //============================================================================
 
     public function PasswordExist($password)
     {
@@ -225,6 +224,4 @@ class UserAuth extends Dbh
             return false;
         }
     }
-
-
 }

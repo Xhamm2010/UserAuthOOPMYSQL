@@ -3,7 +3,7 @@ require 'classes/UserAuth.php';
 
 class FormController extends UserAuth
 {
-
+    public $id;
     public $fullname;
     public $email;
     public $password;
@@ -52,8 +52,8 @@ class FormController extends UserAuth
 //==================================================================
             case isset($_POST['delete']):
                 //unpack all data for deleting
-                $this->email = $_POST['delete'];
-                $this->deleteUser($this->email);
+                $this->id = $_POST['id'];
+                $this->deleteUser($this->id);
                 break;
 //======================================================================
             case isset($_POST['reset']):
@@ -67,7 +67,8 @@ class FormController extends UserAuth
                 $this->updateUser($this->email, $this->password);
                 break;
 //=====================================================================
-            case isset($_POST['all']):
+            case (isset($_POST['all']) || isset($_GET['all'])):
+               // case isset($_GET['all']):
                 //unpack all data for getting all users
                 $this->getAllUsers();
                 break;
