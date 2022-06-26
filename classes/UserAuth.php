@@ -156,8 +156,8 @@ class UserAuth extends Dbh
 
     public function checkEmailExist($email)
     {
-        $conn = $this->db->connect();
-        $sql = "SELECT * FROM users WHERE username = '$email'";
+        $conn = self::$db->connect();
+        $sql = "SELECT * FROM students WHERE email = '$email'";
         $result = $conn->query($sql);
         if ($result->num_rows > 0) {
             return true;
@@ -173,7 +173,7 @@ class UserAuth extends Dbh
 
     public function logout($email)
     {
-        if (isset($_SESSION['email']) == ['email']) {
+        if (isset($_SESSION['username']) == ['username']) {
             session_unset();
             session_destroy();
             header("Location: forms/login.php");
